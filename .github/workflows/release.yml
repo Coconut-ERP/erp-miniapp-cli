@@ -1,0 +1,171 @@
+name: Release
+
+# erp-miniapp-cli is never published to npm. A release is a tarball attached to a
+# GitHub Release, which every package manager can install from a URL.
+#
+#   git tag v0.2.0 && git push --follow-tags   → tests, packs, smoke tests, publishes
+#   Actions ▸ Release ▸ Run workflow           → dry run, tarball as an artifact
+#
+# The asset is always named `erp-miniapp-cli.tgz`, so only the tag varies in the URL:
+#
+#   .../releases/download/v0.2.0/erp-miniapp-cli.tgz   pinned
+#   .../releases/download/latest/erp-miniapp-cli.tgz   moving — re-pointed at every release
+#
+# `latest` is a real tag and a real Release that this workflow force-updates, so
+# `npm i -g <latest url>` never needs editing. Package managers lock by URL, so use a
+# pinned URL anywhere reproducibility matters.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify the tag matches package.json
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(node -p "require('./package.json').version")"
+          if [ "$tag" != "$pkg" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match package.json version $pkg"
+            echo "::error::run \`npm version $tag --no-git-tag-version\`, commit, then re-tag"
+            exit 1
+          fi
+
+      - name: Test
+        run: npm test
+
+      # Renamed to a version-less asset name on purpose: the tag already carries
+      # the version, and npm reads the real one from the package.json inside.
+      - name: Pack
+        id: pack
+        run: |
+          rm -f ./*.tgz
+          npm pack
+          mv "$(ls erp-miniapp-cli-*.tgz)" erp-miniapp-cli.tgz
+          echo "tgz=erp-miniapp-cli.tgz" >> "$GITHUB_OUTPUT"
+          echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+          echo "packed erp-miniapp-cli.tgz ($(du -h erp-miniapp-cli.tgz | cut -f1))"
+
+      # The tarball is what consumers install, so smoke test *it*, not the working
+      # tree. npm drops some files from tarballs (.gitignore, nested package.json…),
+      # so every dotfile the generated project depends on is checked explicitly.
+      - name: Smoke test with npm
+        run: |
+          tgz="$PWD/${{ steps.pack.outputs.tgz }}"
+          dir="$(mktemp -d)"
+          cd "$dir"
+          npm init -y > /dev/null
+          npm install "$tgz"
+          test "$(./node_modules/.bin/erp-miniapp --version)" = "${{ steps.pack.outputs.version }}"
+          ./node_modules/.bin/erp-miniapp init smoke-app --skip-install
+          cd smoke-app
+          for f in package.json .gitignore .oxlintrc.json .oxfmtrc.json .mcp.json .githooks/pre-commit \
+                   .claude/settings.json AGENTS.md CLAUDE.md schema.json src/app/layout.tsx \
+                   .agents/skills/test-audit/SKILL.md .agents/skills/ponytail/SKILL.md \
+                   .agents/skills/grilling/SKILL.md .agents/skills/design-taste-frontend/SKILL.md \
+                   .agents/skills/next-dev-loop/SKILL.md .claude/skills/test-audit/SKILL.md; do
+            test -e "$f" || { echo "::error::missing $f in generated project"; exit 1; }
+          done
+          test -x .githooks/pre-commit || { echo "::error::pre-commit hook is not executable"; exit 1; }
+          grep -q smoke-app package.json
+          ! grep -rq '{{name}}\|{{title}}' --exclude-dir=.agents --exclude-dir=.git . \
+            || { echo "::error::unreplaced placeholder"; exit 1; }
+          echo "npm init ok"
+
+      - name: Smoke test with bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          export PATH="$HOME/.bun/bin:$PATH"
+          tgz="$PWD/${{ steps.pack.outputs.tgz }}"
+          dir="$(mktemp -d)"
+          cd "$dir"
+          echo '{"name":"smoke","type":"module"}' > package.json
+          bun add "file:$tgz"
+          test "$(./node_modules/.bin/erp-miniapp --version)" = "${{ steps.pack.outputs.version }}"
+          echo "bun cli ok"
+
+      - name: Upload the tarball as a workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: erp-miniapp-cli-${{ steps.pack.outputs.version }}.tgz
+          path: ${{ steps.pack.outputs.tgz }}
+          if-no-files-found: error
+
+      - name: Publish the GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          base="https://github.com/${{ github.repository }}/releases/download"
+          url="$base/${GITHUB_REF_NAME}/erp-miniapp-cli.tgz"
+          moving="$base/latest/erp-miniapp-cli.tgz"
+          cat > notes.md <<EOF
+          Not published to npm — install the tarball below with any package manager.
+
+          \`\`\`bash
+          npm install -g $url
+          bun add -g $url
+          \`\`\`
+
+          Then \`erp-miniapp init\`.
+
+          The same build is also served from a URL that never changes:
+          \`$moving\`. Handy for a first install; pin the URL above anywhere
+          reproducibility matters, since package managers lock by URL.
+          EOF
+          gh release create "$GITHUB_REF_NAME" erp-miniapp-cli.tgz \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file notes.md \
+            --latest
+          echo "published $url"
+
+      # A moving pointer, so a fresh machine can install without editing a URL.
+      # The tag is force-updated first: `gh release create` would otherwise open
+      # `latest` on the default branch head rather than on the tagged commit.
+      - name: Re-point the `latest` release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git push -f origin "$GITHUB_SHA:refs/tags/latest"
+
+          cat > notes-latest.md <<EOF
+          Always the newest release — currently **$GITHUB_REF_NAME**.
+
+          \`\`\`bash
+          npm install -g https://github.com/${{ github.repository }}/releases/download/latest/erp-miniapp-cli.tgz
+          \`\`\`
+
+          This asset is replaced on every release, so an install from it is not
+          reproducible. Pin
+          [$GITHUB_REF_NAME](https://github.com/${{ github.repository }}/releases/tag/$GITHUB_REF_NAME)
+          when it matters.
+          EOF
+
+          # `--latest=false` keeps the version release wearing the "Latest" badge.
+          if gh release view latest > /dev/null 2>&1; then
+            gh release upload latest erp-miniapp-cli.tgz --clobber
+            gh release edit latest --title "latest ($GITHUB_REF_NAME)" \
+              --notes-file notes-latest.md --latest=false
+          else
+            gh release create latest erp-miniapp-cli.tgz --title "latest ($GITHUB_REF_NAME)" \
+              --notes-file notes-latest.md --latest=false
+          fi
+          echo "re-pointed https://github.com/${{ github.repository }}/releases/download/latest/erp-miniapp-cli.tgz at $GITHUB_REF_NAME"

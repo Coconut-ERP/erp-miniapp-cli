@@ -1,0 +1,29 @@
+{
+  "objects": [
+    {
+      "name": "Site",
+      "position": 0,
+      "fields": [
+        {
+          "name": "Name",
+          "type": "text",
+          "position": 0
+        },
+        {
+          "name": "Code",
+          "type": "text",
+          "position": 1
+        },
+        {
+          "name": "Status",
+          "type": "single_select",
+          "config": {
+            "source": "static",
+            "options": ["Active", "Inactive", "Draft"]
+          },
+          "position": 2
+        }
+      ]
+    }
+  ]
+}

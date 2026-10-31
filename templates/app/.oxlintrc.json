@@ -1,0 +1,67 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "jsPlugins": [
+    "@shadcn/lint"
+  ],
+  "plugins": [
+    "typescript",
+    "react",
+    "nextjs",
+    "import",
+    "jsx-a11y"
+  ],
+  "categories": {
+    "correctness": "error"
+  },
+  "rules": {
+    "no-unused-vars": "error",
+    "react/set-state-in-effect": "off",
+    "typescript/consistent-type-imports": "error",
+    "typescript/no-non-null-assertion": "error",
+    "shadcn/no-arbitrary-values": "error",
+    "shadcn/no-raw-colors": "error",
+    "shadcn/no-inline-styles": "error",
+    "shadcn/no-unknown-classes": "error"
+  },
+  "ignorePatterns": [
+    ".next",
+    "node_modules",
+    "artifacts",
+    "openwiki",
+    ".agents",
+    ".claude"
+  ],
+  "overrides": [
+    {
+      "files": [
+        "src/components/**",
+        "src/hooks/**",
+        "src/lib/client/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "erp-sdk",
+                "message": "erp-sdk is server-only (it holds the API key). Call /api/* through src/lib/client/api.ts."
+              }
+            ],
+            "patterns": [
+              {
+                "group": [
+                  "@/lib/erp",
+                  "@/lib/erp/*",
+                  "@/lib/api",
+                  "@/lib/api/*"
+                ],
+                "message": "Server-only module. Client code talks to /api/* through src/lib/client/api.ts."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

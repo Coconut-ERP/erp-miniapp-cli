@@ -1,0 +1,12 @@
+@import "tailwindcss";
+@import "@erp/miniapp-ui/styles.css";
+
+/* Paths relative to this file: {{name}}/src/app/ */
+@source "../**/*.{ts,tsx}";
+@source "../../node_modules/@erp/miniapp-ui/dist/**/*.{js,cjs}";
+
+/* App floor: no text smaller than 14px */
+@theme {
+  --text-xs: 0.875rem;
+  --text-xs--line-height: 1.25rem;
+}

@@ -1,0 +1,6 @@
+[mcp_servers.coconut-erp-ui]
+url = "https://coconut-erp-ui.up.railway.app/mcp"
+
+[mcp_servers.next-devtools]
+command = "npx"
+args = ["-y", "next-devtools-mcp@latest"]
