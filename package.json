@@ -1,6 +1,6 @@
 {
   "name": "erp-miniapp-cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Scaffold, zip and pack Coconut ERP mini apps (Next.js + Bun + erp-sdk + @erp/miniapp-ui)",
   "type": "module",
   "bin": {

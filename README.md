@@ -26,7 +26,7 @@ Requires Node ≥ 20, [Bun](https://bun.sh), git, and network access (package in
 2. Runs `bun add` for the latest version of every package, with no version pins. `erp-sdk` and `@erp/miniapp-ui` come from their GitHub `latest` release tarballs (pinned fallback if the API is unreachable).
 3. Installs skills into `.agents/skills/` (symlinked into `.claude/skills/`): `erp-miniapp`, `erp-data`, `erp-tools`, `erp-wiki` (from `erp-sdk`, matching the installed version), `design-taste-frontend`, `vercel-react-best-practices`, `vercel-composition-patterns`, `next-dev-loop`, `test-audit`, `ponytail`, `grilling`, `grill-me`, `openwiki`.
 4. Runs `openwiki integrations install claude|codex|cursor --project`. There is no CI/CD: `AGENTS.md` makes agents update docs and the wiki in the same change as the code, and always write unit tests.
-5. Enforces `bun run check` (format, lint, typecheck, tests) through a git `pre-commit` hook, Claude Code hooks, and `erp-miniapp zip`.
+5. Enforces `bun run check` (format, lint, typecheck, tests) through Claude Code hooks and `erp-miniapp zip`; the git `pre-commit` hook skips tests.
 6. Runs `git init` and `oxfmt`.
 
 ## Changing the template

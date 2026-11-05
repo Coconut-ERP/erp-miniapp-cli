@@ -17,6 +17,7 @@ bun run dev
 | Command | What |
 | --- | --- |
 | `bun run dev` / `build` / `start` | Next.js |
+| `bun run dev:https` | Next.js dev over HTTPS (self-signed cert, https://localhost:3000) |
 | `bun run typecheck` | `tsc --noEmit` |
 | `bun run check` | format:check + lint + typecheck + test |
 | `bun run lint` / `lint:fix` | Oxlint (warnings are errors) + `@shadcn/lint` rules |
@@ -26,7 +27,7 @@ bun run dev
 | `erp-miniapp zip [--no-check]` | Runs `bun run check`, then deploy archive → `artifacts/` |
 | `erp-miniapp pack` | Whole codebase as one Markdown file for LLM context → `artifacts/` |
 
-`bun run check` (format, lint, typecheck, tests) runs automatically: git `pre-commit` hook (installed by `bun install`), Claude Code hooks in `.claude/settings.json`, and before `erp-miniapp zip`.
+`bun run check` (format, lint, typecheck, tests) runs automatically via Claude Code hooks in `.claude/settings.json` and before `erp-miniapp zip`. The git `pre-commit` hook (installed by `bun install`) runs the same minus tests.
 
 ## Working with coding agents
 

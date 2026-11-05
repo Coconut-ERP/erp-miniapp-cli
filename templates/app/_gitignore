@@ -54,3 +54,6 @@ next-env.d.ts
 
 # erp-miniapp zip / pack output
 /artifacts/
+
+# next dev --experimental-https
+certificates

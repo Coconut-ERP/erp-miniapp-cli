@@ -16,7 +16,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 1. **Tests are not optional.** Every behavior change ships with a unit test (`bun test`). New logic in `src/lib/`, `src/hooks/`, `src/lib/api/` → test beside the file (`foo.ts` → `foo.test.ts`). Fixing a bug → write the failing test first. Before adding a test, apply the [`test-audit`](.agents/skills/test-audit/SKILL.md) gate and [docs/conventions/testing.md](docs/conventions/testing.md). If you skip a test, say why in your final message.
 2. **Docs are not optional.** Every change keeps the docs true in the same turn — see [Keeping docs current](#keeping-docs-current). Stale docs are a bug.
-3. **Verify before you say done:** `bun run check` (format, lint, typecheck, tests). Fix every error; never silence a rule, add `--no-verify`, or loosen `.oxlintrc.json` to get green. Enforced three ways: Claude Code hooks (`.claude/settings.json` — format + lint after every edit, full check before stopping), the git `pre-commit` hook, and `erp-miniapp zip`.
+3. **Verify before you say done:** `bun run check` (format, lint, typecheck, tests). Fix every error; never silence a rule, add `--no-verify`, or loosen `.oxlintrc.json` to get green. Enforced by Claude Code hooks (`.claude/settings.json` — format + lint after every edit, full check before stopping) and `erp-miniapp zip`; the git `pre-commit` hook runs format, lint, typecheck (no tests).
 4. **Unclear request or big design choice?** Load the `grilling` skill and interview the user before building. **Prefer the smallest change** that fully solves the task (`ponytail` skill).
 
 ## Skills (load before the matching task)

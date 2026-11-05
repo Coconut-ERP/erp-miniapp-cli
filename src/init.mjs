@@ -151,6 +151,7 @@ export async function init({ name, skipInstall = false, cwd = process.cwd() } = 
         engines: { node: ">=20" },
         scripts: {
           dev: "next dev",
+          "dev:https": "next dev --experimental-https",
           build: "next build",
           start: "next start",
           lint: "oxlint --deny-warnings",
