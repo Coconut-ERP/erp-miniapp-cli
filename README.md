@@ -39,7 +39,7 @@ Requires Node ≥ 20, [Bun](https://bun.sh), git, and network access (package in
 
 ```bash
 npm version 0.2.0 --no-git-tag-version   # bump package.json, commit it
-git tag v0.2.0 && git push --follow-tags
+git push && git tag v0.2.0 && git push origin v0.2.0
 ```
 
 The tag must equal `package.json`'s version. The workflow runs the tests, packs `erp-miniapp-cli.tgz`, smoke-tests the tarball itself (npm and bun: `--version`, then `init --skip-install` and a check that every dotfile the generated project needs survived packing), then publishes a GitHub Release and re-points the `latest` release. **Actions ▸ Release ▸ Run workflow** is a dry run that only uploads the tarball as an artifact.
