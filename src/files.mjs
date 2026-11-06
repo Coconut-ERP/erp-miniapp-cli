@@ -10,6 +10,7 @@ const SKIP_DIRS = new Set([
   "certificates",
   ".agents",
   ".claude",
+  ".marketplace",
 ]);
 const SKIP_FILE = /^(\.env(\..*)?|bun\.lockb?|package-lock\.json|pnpm-lock\.yaml|yarn\.lock|\.DS_Store|Thumbs\.db|.*\.tsbuildinfo|next-env\.d\.ts)$/;
 // .env.example / .env.local.example are templates, not secrets.

@@ -17,7 +17,9 @@ Requires Node ≥ 20, [Bun](https://bun.sh), git, and network access (package in
 | Command | What it does |
 | --- | --- |
 | `erp-miniapp init [name] [--skip-install]` | Next.js + Bun, latest `erp-sdk` and `@erp/miniapp-ui`, Oxlint + Oxfmt + `@shadcn/lint`, `bun test`, starter pages, `AGENTS.md`, skills, OpenWiki for agents |
-| `erp-miniapp zip [-o file] [--no-check]` | Runs `bun run check`, then zips the source for ERP deploy → `artifacts/<name>-v<version>-<date>.zip` (leaves out `node_modules`, `.next`, `.git`, `.env*`, lockfiles, `.agents`, `.claude`) |
+| `erp-miniapp zip [-o file] [--no-check]` | Runs `bun run check`, then zips the source for ERP deploy → `artifacts/<name>-v<version>-<date>.zip` (leaves out `node_modules`, `.next`, `.git`, `.env*`, lockfiles, `.agents`, `.claude`, `.marketplace`) |
+| `erp-miniapp marketplace init [--api url]` | Asks for the publisher email + password, verifies the login, saves `.marketplace/config.json` (`apiUrl`, `email`; no password or token) |
+| `erp-miniapp marketplace publish [--no-check]` | Runs `zip`, asks for the password again, uploads to the marketplace (`name`, `displayName`, `version` from `package.json`, description from `README.md`), then waits for the build and prints the log if it fails |
 | `erp-miniapp pack [-o file]` | Packs the whole codebase into one Markdown file (file tree + contents) to hand to an LLM → `artifacts/<name>-code-<date>.md` |
 
 ## What `init` does

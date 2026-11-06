@@ -8,6 +8,7 @@ import { copyTemplate, titleCase } from "../src/init.mjs";
 import { listFiles } from "../src/files.mjs";
 import { render } from "../src/pack.mjs";
 import { zip } from "../src/zip.mjs";
+import { readDescription } from "../src/marketplace.mjs";
 
 function project() {
   const dir = mkdtempSync(join(tmpdir(), "miniapp-"));
@@ -26,6 +27,7 @@ function project() {
   put("node_modules/dep/index.js", "x");
   put(".next/cache", "x");
   put(".agents/skills/s/SKILL.md", "x");
+  put(".marketplace/config.json", "{}");
   return dir;
 }
 
@@ -72,4 +74,11 @@ test("template copy fills placeholders and renames _gitignore", () => {
   copyTemplate(from, to, { name: "my-app", title: titleCase("my-app") });
   assert.equal(readFileSync(join(to, "a.md"), "utf8"), "# My App (my-app)");
   assert.equal(readFileSync(join(to, ".gitignore"), "utf8"), "node_modules\n");
+});
+
+test("marketplace description is the README without its title", () => {
+  const dir = project();
+  assert.equal(readDescription(dir), "");
+  writeFileSync(join(dir, "README.md"), "# Demo\n\nDoes **things**.\n");
+  assert.equal(readDescription(dir), "Does **things**.");
 });

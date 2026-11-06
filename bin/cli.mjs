@@ -3,12 +3,16 @@ import { readFileSync } from "node:fs";
 import { pack } from "../src/pack.mjs";
 import { init } from "../src/init.mjs";
 import { zip } from "../src/zip.mjs";
+import { marketplaceInit, marketplacePublish } from "../src/marketplace.mjs";
 
 const HELP = `erp-miniapp <command>
 
   init [name] [--skip-install]   Scaffold a new mini app (asks for the name if omitted)
   zip  [-o file] [--no-check]    Run bun check, then zip the project for ERP deploy -> artifacts/
   pack [-o file]                 Pack the codebase into one Markdown file -> artifacts/
+  marketplace init [--api url]   Log in as a publisher, save .marketplace/config.json
+  marketplace publish [--no-check]
+                                 Zip, ask the password again, upload, wait for the build
 
   -v, --version   -h, --help`;
 
@@ -27,6 +31,10 @@ try {
     await init({ name, skipInstall: flag("--skip-install") });
   } else if (cmd === "zip") {
     zip({ out: value("-o", "--out"), check: !flag("--no-check") });
+  } else if (cmd === "marketplace" && args[0] === "init") {
+    await marketplaceInit({ apiUrl: value("--api") });
+  } else if (cmd === "marketplace" && args[0] === "publish") {
+    await marketplacePublish({ check: !flag("--no-check") });
   } else if (cmd === "pack") {
     pack({ out: value("-o", "--out") });
   } else {
