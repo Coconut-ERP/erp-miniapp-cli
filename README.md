@@ -16,15 +16,16 @@ Requires Node ≥ 20, [Bun](https://bun.sh), git, and network access (package in
 
 | Command | What it does |
 | --- | --- |
-| `erp-miniapp init [name] [--skip-install]` | Next.js + Bun, latest `erp-sdk` and `@erp/miniapp-ui`, Oxlint + Oxfmt + `@shadcn/lint`, `bun test`, starter pages, `AGENTS.md`, skills, OpenWiki for agents |
+| `erp-miniapp init [name] [--layout l] [--skip-install]` | Next.js + Bun, app shell `sidebar` (default) / `sidebar-header` / `topnav` / `blank` (asked if omitted), latest `erp-sdk` and `@erp/miniapp-ui`, Oxlint + Oxfmt + `@shadcn/lint`, `bun test`, starter pages, `AGENTS.md`, skills, OpenWiki for agents |
 | `erp-miniapp zip [-o file] [--no-check]` | Runs `bun run check`, then zips the source for ERP deploy → `artifacts/<name>-v<version>-<date>.zip` (leaves out `node_modules`, `.next`, `.git`, `.env*`, lockfiles, `.agents`, `.claude`, `.marketplace`) |
 | `erp-miniapp marketplace init [--api url]` | Asks for the publisher email + password, verifies the login, saves `.marketplace/config.json` (`apiUrl`, `email`; no password or token) |
 | `erp-miniapp marketplace publish [--no-check]` | Runs `zip`, asks for the password again, uploads to the marketplace (`name`, `displayName`, `version` from `package.json`, description from `README.md`), then waits for the build and prints the log if it fails |
+| `erp-miniapp update` | Checks the latest GitHub Release and reinstalls the CLI globally (bun if installed with bun, else npm); does nothing if already current |
 | `erp-miniapp pack [-o file]` | Packs the whole codebase into one Markdown file (file tree + contents) to hand to an LLM → `artifacts/<name>-code-<date>.md` |
 
 ## What `init` does
 
-1. Copies `templates/app` (replacing `{{name}}` and `{{title}}`); `package.json` is generated in code.
+1. Copies `templates/app` (replacing `{{name}}` and `{{title}}`), then the chosen `templates/layouts/<layout>/app-shell.tsx` into `src/components/` (`topnav` / `blank` also drop `src/lib/sidebar-state*`); `package.json` is generated in code.
 2. Runs `bun add` for the latest version of every package, with no version pins. `erp-sdk` and `@erp/miniapp-ui` come from their GitHub `latest` release tarballs (pinned fallback if the API is unreachable).
 3. Installs skills into `.agents/skills/` (symlinked into `.claude/skills/`): `erp-miniapp`, `erp-data`, `erp-tools`, `erp-wiki` (from `erp-sdk`, matching the installed version), `design-taste-frontend`, `vercel-react-best-practices`, `vercel-composition-patterns`, `next-dev-loop`, `test-audit`, `ponytail`, `grilling`, `grill-me`, `openwiki`.
 4. Runs `openwiki integrations install claude|codex|cursor --project`. There is no CI/CD: `AGENTS.md` makes agents update docs and the wiki in the same change as the code, and always write unit tests.
@@ -33,7 +34,7 @@ Requires Node ≥ 20, [Bun](https://bun.sh), git, and network access (package in
 
 ## Changing the template
 
-`templates/app` is the starter project; `templates/skills` holds vendored skills (not the ones that ship with `erp-sdk`). After editing, run `npm test` (covers zip, pack and template copy), then run `erp-miniapp init` in a scratch directory and `bun run check` in the result.
+`templates/app` is the starter project, `templates/layouts` the app shells; `templates/skills` holds vendored skills (not the ones that ship with `erp-sdk`). After editing, run `npm test` (covers zip, pack and template copy), then run `erp-miniapp init` in a scratch directory and `bun run check` in the result.
 
 ## Releasing
 

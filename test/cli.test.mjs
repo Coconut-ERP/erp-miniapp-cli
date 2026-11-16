@@ -1,13 +1,14 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { unzipSync } from "fflate";
-import { copyTemplate, titleCase } from "../src/init.mjs";
+import { applyLayout, copyTemplate, LAYOUTS, titleCase } from "../src/init.mjs";
 import { listFiles } from "../src/files.mjs";
 import { render } from "../src/pack.mjs";
 import { zip } from "../src/zip.mjs";
+import { newer } from "../src/update.mjs";
 import { readDescription } from "../src/marketplace.mjs";
 
 function project() {
@@ -81,4 +82,22 @@ test("marketplace description is the README without its title", () => {
   assert.equal(readDescription(dir), "");
   writeFileSync(join(dir, "README.md"), "# Demo\n\nDoes **things**.\n");
   assert.equal(readDescription(dir), "Does **things**.");
+});
+
+test("newer compares versions numerically", () => {
+  assert.ok(newer("v0.10.0", "0.9.0"));
+  assert.ok(!newer("v0.3.0", "0.3.0"));
+  assert.ok(!newer("v0.2.9", "0.3.0"));
+});
+
+test("applyLayout writes the chosen shell and drops sidebar code when unused", () => {
+  for (const layout of LAYOUTS) {
+    const dir = mkdtempSync(join(tmpdir(), "layout-"));
+    copyTemplate(new URL("../templates/app", import.meta.url).pathname, dir, { name: "demo", title: "Demo" });
+    applyLayout(dir, layout, { name: "demo", title: "Demo" });
+    const shell = readFileSync(join(dir, "src/components/app-shell.tsx"), "utf8");
+    assert.match(shell, /export function AppShell/);
+    assert.ok(!shell.includes("{{name}}"));
+    assert.equal(existsSync(join(dir, "src/lib/sidebar-state.ts")), layout.startsWith("sidebar"), layout);
+  }
 });

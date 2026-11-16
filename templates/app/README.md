@@ -79,7 +79,7 @@ Each route ships a **`docs.md`** next to `page.tsx` (purpose, files, API, `seed`
 | `/requests/new` | Multi-step service-request form | [`src/app/requests/new/docs.md`](src/app/requests/new/docs.md) |
 | `/pipeline` | Redirect → `/table` | — |
 
-Sidebar nav: `src/constants/nav.ts`.
+Navigation: `SIDEBAR_ITEMS` in `src/components/app-shell.tsx` (sidebar layouts) or `NAV_ITEMS` in `src/constants/nav.ts` (top nav).
 
 ## API
 

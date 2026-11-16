@@ -77,7 +77,7 @@ jobs:
           ./node_modules/.bin/erp-miniapp init smoke-app --skip-install
           cd smoke-app
           for f in package.json .gitignore .oxlintrc.json .oxfmtrc.json .mcp.json .githooks/pre-commit \
-                   .claude/settings.json AGENTS.md CLAUDE.md schema.json src/app/layout.tsx \
+                   .claude/settings.json AGENTS.md CLAUDE.md schema.json src/app/layout.tsx src/components/app-shell.tsx \
                    .agents/skills/test-audit/SKILL.md .agents/skills/ponytail/SKILL.md \
                    .agents/skills/grilling/SKILL.md .agents/skills/design-taste-frontend/SKILL.md \
                    .agents/skills/next-dev-loop/SKILL.md .claude/skills/test-audit/SKILL.md; do

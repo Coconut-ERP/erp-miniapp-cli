@@ -3,16 +3,21 @@ import { readFileSync } from "node:fs";
 import { pack } from "../src/pack.mjs";
 import { init } from "../src/init.mjs";
 import { zip } from "../src/zip.mjs";
+import { update } from "../src/update.mjs";
 import { marketplaceInit, marketplacePublish } from "../src/marketplace.mjs";
 
 const HELP = `erp-miniapp <command>
 
-  init [name] [--skip-install]   Scaffold a new mini app (asks for the name if omitted)
+  init [name] [--layout l] [--skip-install]
+                                 Scaffold a new mini app (asks for the name and layout if omitted)
+                                 layouts: sidebar, sidebar-header, topnav, blank
   zip  [-o file] [--no-check]    Run bun check, then zip the project for ERP deploy -> artifacts/
   pack [-o file]                 Pack the codebase into one Markdown file -> artifacts/
   marketplace init [--api url]   Log in as a publisher, save .marketplace/config.json
   marketplace publish [--no-check]
                                  Zip, ask the password again, upload, wait for the build
+
+  update                         Update this CLI to the latest release
 
   -v, --version   -h, --help`;
 
@@ -27,14 +32,16 @@ try {
   if (flag("-v", "--version") || cmd === "-v" || cmd === "--version") {
     console.log(JSON.parse(readFileSync(new URL("../package.json", import.meta.url))).version);
   } else if (cmd === "init") {
-    const name = args.find((a, i) => !a.startsWith("-") && args[i - 1] !== "-o");
-    await init({ name, skipInstall: flag("--skip-install") });
+    const name = args.find((a, i) => !a.startsWith("-") && !["-o", "--layout"].includes(args[i - 1]));
+    await init({ name, layout: value("--layout"), skipInstall: flag("--skip-install") });
   } else if (cmd === "zip") {
     zip({ out: value("-o", "--out"), check: !flag("--no-check") });
   } else if (cmd === "marketplace" && args[0] === "init") {
     await marketplaceInit({ apiUrl: value("--api") });
   } else if (cmd === "marketplace" && args[0] === "publish") {
     await marketplacePublish({ check: !flag("--no-check") });
+  } else if (cmd === "update") {
+    await update();
   } else if (cmd === "pack") {
     pack({ out: value("-o", "--out") });
   } else {

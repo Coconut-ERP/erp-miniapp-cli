@@ -7,6 +7,7 @@ import {
   readdirSync,
   readFileSync,
   renameSync,
+  rmSync,
   symlinkSync,
   writeFileSync,
 } from "node:fs";
@@ -16,6 +17,7 @@ import { fileURLToPath } from "node:url";
 
 const TEMPLATES = fileURLToPath(new URL("../templates", import.meta.url));
 const NAME_RE = /^[a-z][a-z0-9-]*$/;
+export const LAYOUTS = ["sidebar", "sidebar-header", "topnav", "blank"];
 
 // Used only when the GitHub API is unreachable (rate limit, offline).
 const FALLBACK = {
@@ -98,6 +100,27 @@ async function latestTarball(repo) {
   }
 }
 
+async function askLayout() {
+  // ponytail: non-interactive runs (CI, pipes) take the default instead of hanging on a prompt.
+  if (!process.stdin.isTTY) return LAYOUTS[0];
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  try {
+    const list = LAYOUTS.map((l, i) => `  ${i + 1}. ${l}`).join("\n");
+    const answer = (await rl.question(`Layout:\n${list}\nPick 1-${LAYOUTS.length} [1]: `)).trim();
+    return LAYOUTS[Number(answer || 1) - 1] ?? answer;
+  } finally {
+    rl.close();
+  }
+}
+
+/** Put the chosen shell at src/components/app-shell.tsx; drop sidebar-only code for shells without a sidebar. */
+export function applyLayout(dir, layout, vars) {
+  copyTemplate(join(TEMPLATES, "layouts", layout), join(dir, "src/components"), vars);
+  if (!layout.startsWith("sidebar")) {
+    for (const f of ["sidebar-state.ts", "sidebar-state.test.js"]) rmSync(join(dir, "src/lib", f), { force: true });
+  }
+}
+
 async function askName() {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   try {
@@ -124,11 +147,13 @@ function mirrorSkills(dir) {
   }
 }
 
-export async function init({ name, skipInstall = false, cwd = process.cwd() } = {}) {
+export async function init({ name, layout, skipInstall = false, cwd = process.cwd() } = {}) {
   name ??= await askName();
   if (!NAME_RE.test(name)) {
     throw new Error(`"${name}" is not a valid name — use lowercase letters, digits and dashes, starting with a letter`);
   }
+  layout ??= await askLayout();
+  if (!LAYOUTS.includes(layout)) throw new Error(`unknown layout "${layout}" — use one of: ${LAYOUTS.join(", ")}`);
   const dir = resolve(cwd, name);
   if (existsSync(dir) && readdirSync(dir).length) throw new Error(`${dir} already exists and is not empty`);
   if (!skipInstall && !capture("bun", ["--version"])) {
@@ -136,7 +161,9 @@ export async function init({ name, skipInstall = false, cwd = process.cwd() } = 
   }
 
   console.log(`\nCreating ${name} in ${dir}\n`);
-  copyTemplate(join(TEMPLATES, "app"), dir, { name, title: titleCase(name) });
+  const vars = { name, title: titleCase(name) };
+  copyTemplate(join(TEMPLATES, "app"), dir, vars);
+  applyLayout(dir, layout, vars);
   cpSync(join(TEMPLATES, "skills"), join(dir, ".agents/skills"), { recursive: true });
 
   const bunVersion = capture("bun", ["--version"]);
